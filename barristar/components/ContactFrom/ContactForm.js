@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import SimpleReactValidator from "simple-react-validator";
+import emailjs from "emailjs-com";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Mensajes en español
 const mensajesEnEspañol = {
@@ -27,7 +30,7 @@ const mensajesEnEspañol = {
   integer: "El campo :attribute debe ser un número entero.",
   max: "El campo :attribute no debe ser mayor a :max.",
   min: "El campo :attribute debe ser al menos :min.",
-  numeric: "El campo :attribute debe ser un número.",
+  numeric: "El campo :attribute debe contener números.",
   phone: "El campo :attribute debe ser un número de teléfono válido.",
   regex: "El formato de :attribute no es válido.",
   required: "El campo :attribute es obligatorio.",
@@ -36,17 +39,21 @@ const mensajesEnEspañol = {
 
 const ContactForm = () => {
   const [forms, setForms] = useState({
-    name: "",
+    nombre: "",
     email: "",
-    subject: "",
-    phone: "",
-    message: "",
+    servicio: "",
+    telefono: "",
+    mensaje: "",
   });
+
+  const serviceID = "service_2gnwr1d";
+  const templateID = "template_728cbrd";
+  const userID = "Z7T5FvMNez2BKIgdt";
 
   const [validator] = useState(
     new SimpleReactValidator({
       className: "errorMessage",
-      messages: mensajesEnEspañol, // Aplicamos los mensajes en español
+      messages: mensajesEnEspañol,
     })
   );
 
@@ -58,15 +65,34 @@ const ContactForm = () => {
   const submitHandler = (e) => {
     e.preventDefault();
     if (validator.allValid()) {
-      alert("Formulario enviado correctamente");
-      setForms({
-        name: "",
-        email: "",
-        subject: "",
-        phone: "",
-        message: "",
-      });
-      validator.hideMessages(); // Ocultar mensajes tras el envío correcto
+      const emailData = {
+        to_name: "IntegralPro",
+
+        from_name: forms.nombre,
+
+        message: `Servicio: ${forms.servicio}\nTeléfono: ${forms.telefono}\nMensaje: ${forms.mensaje}`,
+
+        email_id: forms.email,
+      };
+      emailjs
+        .send(serviceID, templateID, emailData, userID)
+        .then((response) => {
+          toast.success("Formulario enviado correctamente");
+          setForms({
+            nombre: "",
+            email: "",
+            servicio: "",
+            telefono: "",
+            mensaje: "",
+          });
+          validator.hideMessages();
+        })
+        .catch((error) => {
+          console.error("Error al enviar el email:", error.text);
+          toast.error(
+            "Hubo un error al enviar el formulario, inténtalo de nuevo."
+          );
+        });
     } else {
       validator.showMessages(); // Mostrar mensajes si hay errores
     }
@@ -82,14 +108,14 @@ const ContactForm = () => {
       <div className="w-[calc(50%-30px)] float-left mx-[15px] mb-[25px] col:float-none col:w-[calc(100%-25px)]">
         <input
           className="form-control w-full bg-transparent h-[50px] border border-[#ebebeb] text-[#666] transition-all pl-[25px] focus:outline-0 focus:shadow-none focus:border-section focus:bg-transparent"
-          value={forms.name}
+          value={forms.nombre}
           type="text"
-          name="name"
+          name="nombre"
           onBlur={changeHandler}
           onChange={changeHandler}
           placeholder="Tu Nombre"
         />
-        {validator.message("name", forms.name, "required|alpha_space")}
+        {validator.message("nombre", forms.nombre, "required|alpha_space")}
       </div>
 
       <div className="w-[calc(50%-30px)] float-left mx-[15px] mb-[25px] col:float-none col:w-[calc(100%-25px)]">
@@ -102,27 +128,31 @@ const ContactForm = () => {
           onChange={changeHandler}
           placeholder="Tu Correo"
         />
-        {validator.message("email", forms.email, "required|email")}
+        <div style={{ minHeight: "15px" }}>
+          {validator.message("email", forms.email, "required|email")}
+        </div>
       </div>
 
       <div className="w-[calc(50%-30px)] float-left mx-[15px] mb-[25px] col:float-none col:w-[calc(100%-25px)]">
         <input
           className="form-control w-full bg-transparent h-[50px] border border-[#ebebeb] text-[#666] transition-all pl-[25px] focus:outline-0 focus:shadow-none focus:border-section focus:bg-transparent"
-          value={forms.phone}
+          value={forms.telefono}
           type="text"
-          name="phone"
+          name="telefono"
           onBlur={changeHandler}
           onChange={changeHandler}
           placeholder="Tu Teléfono"
         />
-        {validator.message("phone", forms.phone, "required|phone")}
+        <div style={{ minHeight: "15px" }}>
+          {validator.message("telefono", forms.telefono, "required|numeric")}
+        </div>
       </div>
 
       <div className="w-[calc(50%-30px)] float-left mx-[15px] mb-[25px] col:float-none col:w-[calc(100%-25px)]">
         <select
           className="form-control w-full bg-transparent h-[50px] border border-[#ebebeb] text-[#666] transition-all pl-[25px] focus:outline-0 focus:shadow-none focus:border-section focus:bg-transparent"
-          value={forms.subject}
-          name="subject"
+          value={forms.servicio}
+          name="servicio"
           onBlur={changeHandler}
           onChange={changeHandler}
         >
@@ -131,19 +161,21 @@ const ContactForm = () => {
           <option value="Auditoria">Servicio de Auditoría</option>
           <option value="Gestion">Servicio de Gestión Empresarial</option>
         </select>
-        {validator.message("subject", forms.subject, "required")}
+        <div style={{ minHeight: "15px" }}>
+          {validator.message("servicio", forms.servicio, "required")}
+        </div>
       </div>
 
       <div className="w-[calc-(100%-25px)] mb-[25px] mx-[15px]">
         <textarea
           className="form-control w-full bg-transparent h-[180px] border border-[#ebebeb] text-[#666] transition-all pt-[15px] pl-[25px] focus:outline-0 focus:shadow-none focus:border-section focus:bg-transparent"
-          value={forms.message}
-          name="message"
+          value={forms.mensaje}
+          name="mensaje"
           placeholder="Tu Mensaje"
           onBlur={changeHandler}
           onChange={changeHandler}
         />
-        {validator.message("message", forms.message, "required")}
+        {validator.message("mensaje", forms.mensaje, "required")}
       </div>
 
       <div className="text-center w-full mb-[10px]">
